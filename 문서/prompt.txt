@@ -1,0 +1,681 @@
+You are a senior Python engineer, Streamlit developer, SMT domain expert, and manufacturing data analyst.
+
+You are working on a CUSTOMER DEMO MVP, not a production system.
+
+Your goal is to refactor and simplify an existing Streamlit app into a visually strong RCA-oriented demo for Panasonic Mount equipment data.
+
+IMPORTANT:
+- Do NOT build from scratch unless absolutely necessary
+- Reuse the existing app.py as much as possible
+- Especially reuse the existing RCA-related logic, sample-data fallback logic, and visual analysis logic where useful
+- Simplify structure and storytelling for executive/customer demo use
+- Visualization quality is VERY IMPORTANT
+- The result must feel like a polished demo, not a raw engineering dashboard
+
+==================================================
+[PROJECT CONTEXT]
+
+This app is for explaining three things to a customer:
+
+1. What kind of data we currently have, and whether it is usable
+2. What can be analyzed from Panasonic Mount equipment logs
+3. How RCA (Root Cause Analysis) can be derived from the data
+
+Current business reality:
+- We mainly have Mount equipment-related data
+- Full line/process data is not fully available
+- So equipment-level analysis is REAL
+- Process-level analysis should be carefully explained as LIMITED / inferred / future expansion
+
+This must be clearly reflected in the UI and wording.
+
+==================================================
+[USE THE EXISTING FILE AS BASE]
+
+You MUST use the existing app.py as the primary reference and source for reusable logic.
+
+Do not ignore the existing work.
+
+You should inspect and reuse, where appropriate:
+- DB connection logic
+- data loading / sample fallback logic
+- build_views
+- helper functions
+- KPI cards
+- process/machine/quality render logic
+- RCA-related summaries
+- action recommendation templates
+- chart logic already implemented
+- narrative summary logic already implemented
+
+However:
+- remove or simplify unnecessary complexity
+- remove filters that are not needed
+- reorganize screen structure for clearer storytelling
+- improve visual layout and readability
+- focus the app on this specific demo objective
+
+==================================================
+[DATABASE CONNECTION]
+
+Use the remote PostgreSQL database.
+
+Connection info:
+- host: 192.168.200.105
+- port: 5432
+- dbname: nexedge
+- user: analysis
+- password: analysis1!
+
+Use environment variables if useful, but the above must be the default.
+
+==================================================
+[NON-NEGOTIABLE RULES]
+
+1. Do NOT assume schema blindly if existing app.py already uses real tables successfully
+2. Reuse the current DB logic and table usage if valid
+3. If existing table/column assumptions fail, handle gracefully
+4. UI language must be Korean
+5. Keep only one user filter:
+   - 날짜 필터
+   - options:
+     - 최근 7일
+     - 최근 30일
+     - 전체
+6. Remove all other filters unless absolutely required internally
+7. This is a demo:
+   - fewer controls
+   - more clarity
+   - more storytelling
+8. RCA should NEVER claim confirmed root cause
+   Use wording like:
+   - 원인 후보
+   - 관찰 패턴
+   - 영향도가 큰 항목
+   - 우선 점검 대상
+   - 반복 발생 경향
+   - 가능성
+9. Visualization quality is critical
+10. The layout must look presentation-ready
+
+==================================================
+[PRIMARY REFACTORING GOAL]
+
+Refactor the app into EXACTLY 3 tabs:
+
+TAB 1 = 데이터 요약
+TAB 2 = 설비/공정 분석
+TAB 3 = RCA 분석
+
+Use Streamlit wide layout.
+
+==================================================
+[OVERALL STORYLINE]
+
+The app must tell this story:
+
+데이터 현황 파악
+→ 무엇을 볼 수 있는가
+→ 어느 설비에서 문제가 큰가
+→ 어떤 패턴이 반복되는가
+→ 어떤 원인 후보를 우선 봐야 하는가
+→ 어떤 조치를 생각할 수 있는가
+
+This is NOT just a dashboard.
+This is a guided RCA demo story.
+
+==================================================
+[SIMPLIFIED FILTER DESIGN]
+
+Implement ONLY one top-level filter:
+
+날짜 선택:
+- 최근 7일
+- 최근 30일
+- 전체
+
+Rules:
+- Apply the selected period to all tabs
+- Use SQL or dataframe filtering efficiently
+- Do not expose line/stage/machine/lot filters in the main UI
+- If needed for internal grouping, use them inside the logic only
+
+==================================================
+[TAB 1 - 데이터 요약]
+
+Purpose:
+This tab must explain the CURRENT DATASET itself.
+Think of it as “summary of the data we have now”.
+
+This is very important for customer trust.
+
+This tab should answer:
+- What data do we have?
+- Is it usable?
+- What analysis is possible?
+- What are its limits?
+
+Implement the following sections:
+
+--------------------------------------------------
+[Section A - 데이터 범위 요약]
+Show KPI cards for:
+- 총 데이터 건수
+- 설비 수
+- 모델 수
+- 데이터 기간
+
+Use visually strong KPI cards.
+
+--------------------------------------------------
+[Section B - 데이터 종류]
+Show clean cards/badges explaining what fields or data types currently exist.
+
+Examples:
+- 가동시간
+- 정지시간
+- 정지사유
+- 세부알람
+- timestamp
+- 설비 식별자
+
+This section is descriptive, not deeply technical.
+Use customer-facing wording.
+
+--------------------------------------------------
+[Section C - 데이터 품질]
+This is the most important section in Tab 1.
+
+Compute and display:
+- 주요 컬럼 결측치 비율
+- timestamp null ratio
+- runtime/downtime null ratio
+- stop reason null ratio
+- alarm null ratio
+- equipment id null ratio
+
+Display format:
+- color-coded quality summary
+- table or styled dataframe
+- traffic light style:
+  - 정상
+  - 주의
+  - 제한적 활용 가능
+
+Also display short interpretation text.
+
+Examples:
+- “정지 및 알람 분석에는 충분한 수준입니다.”
+- “일부 컬럼 결측으로 세부 RCA는 제한될 수 있습니다.”
+
+--------------------------------------------------
+[Section D - 데이터 분포]
+Use strong charts.
+
+Must include:
+1. 가동 vs 정지 비율
+   - pie or donut chart
+2. 설비별 데이터 건수
+   - bar chart
+3. 모델별 데이터 건수
+   - bar chart if possible
+4. 정지시간 분포
+   - histogram or box plot
+5. 알람 종류 수 / 주요 알람 분포
+   - bar chart
+
+--------------------------------------------------
+[Section E - 자동 요약 문장]
+Generate 3~4 concise Korean summary lines.
+
+Examples:
+- “현재 데이터는 설비 정지 및 알람 중심 분석에 적합합니다.”
+- “설비 기준 비교와 정지 원인 분석이 가능합니다.”
+- “생산/품질 데이터 부재로 공정 전체 분석은 제한적입니다.”
+
+--------------------------------------------------
+[Tab 1 Design Requirements]
+- This tab must feel like a “data readiness / summary” page
+- Clear, calm, trustworthy
+- Executive-friendly
+- Avoid excessive engineering jargon
+
+==================================================
+[TAB 2 - 설비/공정 분석]
+
+Purpose:
+This tab shows exploratory analysis (EDA) using actual data.
+It must clearly separate:
+- actual equipment analysis
+- limited process-oriented interpretation
+
+This tab should answer:
+- Which equipment is problematic?
+- What patterns appear in downtime and alarms?
+- What can be seen from a process-like perspective even with Mount-only data?
+
+--------------------------------------------------
+[Section A - 설비 관점 분석]
+This is REAL and data-driven.
+Reuse existing machine/process/quality visual logic where useful, but simplify and focus.
+
+Must include:
+
+1. 가동률 분석
+Formula:
+availability = runtime / (runtime + downtime)
+or reuse the existing app’s available calculation if already built
+
+Visuals:
+- KPI card: 평균 가동률
+- bar chart: 설비별 가동률
+- optional model comparison
+
+2. 정지시간 분석
+Visuals:
+- bar chart: 설비별 총 정지시간
+- optional line chart: 날짜별 정지시간 추이
+
+3. 정지 원인 분석
+Visuals:
+- stop reason Top N
+- Pareto chart
+- cumulative contribution line if possible
+
+4. 알람 분석
+Visuals:
+- 알람 Top N
+- repeated alarm counts
+- equipment vs alarm concentration if useful
+
+5. 시간대 패턴
+Visuals:
+- 시간대별 정지 발생
+- 시간대별 알람 발생
+- line chart or heatmap
+
+6. 자연어 인사이트
+Generate 3~5 short Korean insights from real data
+
+Examples:
+- “특정 설비에 정지시간이 집중됩니다.”
+- “상위 원인이 전체 손실의 대부분을 차지합니다.”
+- “특정 시간대에 반복 알람이 관찰됩니다.”
+
+--------------------------------------------------
+[Section B - 공정 관점 분석 (제한적)]
+This section must be careful and honest.
+
+Because only Mount-centered data is available, this is NOT full process analysis.
+
+You MUST clearly display a note such as:
+“현재 데이터는 Mount 단일 설비 중심으로 공정 전체 분석은 제한적입니다.”
+
+Still, provide useful inferred process-oriented views.
+
+Possible interpretations:
+1. stop → run 전환 패턴
+2. 반복 정지 구간
+3. 회복(recovery) 패턴
+4. 운영상 병목 시간대 추정
+5. Mount 내부 흐름 관점 해석
+
+Do NOT pretend this is full Printer → Mount → AOI process analysis.
+
+Use wording like:
+- “운영 흐름 관점”
+- “Mount 내부 흐름 관점”
+- “제한적 공정 해석”
+- “전체 공정 병목 분석은 추가 데이터 필요”
+
+--------------------------------------------------
+[Tab 2 Visual Priorities]
+This tab must look visually strong.
+
+Prioritize charts like:
+- KPI cards
+- bar charts
+- Pareto
+- line charts
+- heatmaps
+- comparison visuals
+
+Avoid:
+- too many raw tables
+- too much text
+- clutter
+
+==================================================
+[TAB 3 - RCA 분석]
+
+This is the MOST IMPORTANT tab.
+
+Do NOT make this a simple “top alarm” tab.
+It must show HOW RCA is derived.
+
+This tab must explicitly reuse the earlier RCA concepts already present in the existing app.
+Reorganize and strengthen them into a clean RCA storytelling tab.
+
+==================================================
+[TAB 3 - RCA CORE PRINCIPLE]
+
+This tab must tell the following RCA story:
+
+문제 설비 식별
+→ 손실 구조 파악
+→ 원인 집중도 분석
+→ 반복 패턴 확인
+→ 영향도와 빈도 비교
+→ 원인 후보 도출
+→ 권장 조치 제안
+
+Use existing RCA-related logic from app.py wherever possible.
+
+==================================================
+[TAB 3 - REQUIRED RCA FRAMEWORK]
+
+Build RCA around these 5 pillars:
+
+1. 언제 (When)
+2. 어디 (Where)
+3. 얼마나 (Impact)
+4. 반복 (Pattern)
+5. 무엇 (Cause Candidate)
+
+These must be visually represented as cards or structured panels.
+
+==================================================
+[TAB 3 - REQUIRED RCA ANALYSIS LOGIC]
+
+You must implement and/or reuse logic for the following:
+
+--------------------------------------------------
+[STEP 1 - 어디 (Where)]
+Goal:
+Identify where problems concentrate
+
+Analysis:
+- 설비별 정지시간 ranking
+- 설비별 정지건수 ranking
+- 모델별 비교 if available
+
+Output:
+- most problematic equipment
+- problem concentration by equipment/model
+
+Visuals:
+- bar chart ranking
+- KPI card for top problematic equipment
+
+--------------------------------------------------
+[STEP 2 - 무엇 (Cause Candidate)]
+Goal:
+Identify candidate causes
+
+Analysis:
+- stop reason Top N
+- alarm Top N
+- Pareto by downtime contribution
+
+Output:
+- top cause candidates
+- cause concentration
+
+Visuals:
+- Pareto chart
+- bar chart
+- top cause cards
+
+--------------------------------------------------
+[STEP 3 - 얼마나 (Impact)]
+Goal:
+Measure how serious each issue is
+
+Analysis:
+- total downtime
+- downtime frequency
+- average downtime per event
+- contribution ratio of top causes
+
+Important:
+Differentiate:
+- frequent minor issues
+- rare but high-impact issues
+
+Visuals:
+- KPI cards
+- impact summary cards
+- duration/frequency comparison
+
+--------------------------------------------------
+[STEP 4 - 반복 (Pattern)]
+Goal:
+Show whether the same problem repeats
+
+Analysis:
+- repeated same alarm
+- repeated same stop reason
+- same equipment + same alarm recurrence
+- repeated problem clusters in time
+
+Visuals:
+- recurrence chart
+- heatmap or repeat table
+- repeated alarm ranking
+
+Output:
+- chronic issue candidates
+- repeated operational problems
+
+--------------------------------------------------
+[STEP 5 - 언제 (When)]
+Goal:
+Show when problems concentrate
+
+Analysis:
+- hourly downtime concentration
+- time-of-day alarm concentration
+- recurring time windows
+
+Visuals:
+- line chart
+- hourly heatmap
+- peak time summary card
+
+Output:
+- problematic time windows
+- likely operational stress windows
+
+==================================================
+[TAB 3 - FREQUENCY VS IMPACT CHART (MANDATORY)]
+
+This is VERY IMPORTANT for customer persuasion.
+
+Implement a scatter/quadrant-style chart:
+
+- x-axis = frequency (stop count or occurrence count)
+- y-axis = impact (total downtime)
+- each point = stop reason or alarm
+- point size = optional contribution or average duration
+- color = stop reason group or category
+
+This chart is critical because it explains:
+- frequent but small issues
+- rare but large issues
+- frequent and high-impact chronic issues
+
+This is one of the strongest RCA visuals.
+If similar logic exists in app.py, reuse/adapt it.
+
+==================================================
+[TAB 3 - RCA NARRATIVE INSIGHTS]
+
+Generate 4~6 Korean RCA insights automatically.
+
+Examples:
+- “특정 설비에서 정지시간이 집중되며 우선 점검 대상입니다.”
+- “상위 원인이 전체 손실의 대부분을 차지하는 패턴이 관찰됩니다.”
+- “동일 알람이 특정 시간대에 반복 발생합니다.”
+- “발생 빈도는 낮지만 1회 영향도가 큰 원인 후보가 존재합니다.”
+- “반복 알람과 정지시간이 동시에 높은 항목은 만성 이슈 후보입니다.”
+
+STRICT WORDING RULE:
+Never say:
+- 확정 원인
+- 명백한 원인
+- 원인은 X이다
+
+Always prefer:
+- 원인 후보
+- 가능성
+- 관찰 패턴
+- 우선 점검 대상
+- 영향도가 높은 항목
+- 반복 경향
+
+==================================================
+[TAB 3 - ACTION RECOMMENDATION]
+
+Reuse the existing ACTION_TEMPLATES logic if available in app.py.
+
+Display action recommendations based on top stop reasons / cause candidates.
+
+Show top 3 cause-based actions.
+
+Format:
+- 원인 후보
+- 권장 점검 포인트
+- 현장 확인 항목
+
+This section should feel practical and customer-friendly.
+
+==================================================
+[TAB 3 - RCA SCENARIO SECTION]
+
+If real data is insufficient to create a strong RCA story,
+you MUST include an additional section clearly labeled:
+
+- “예시 RCA 시나리오”
+- “가상 RCA 흐름”
+
+Use existing sample-data fallback logic if available.
+
+This scenario must be realistic for SMT Mount context.
+
+Example scenario structure:
+1. 특정 설비에서 정지시간 증가
+2. feeder/alarm 계열 반복
+3. 오전 특정 시간대 집중
+4. 누적 정지시간 증가
+5. 원인 후보:
+   - feeder 상태
+   - 자재 공급 안정성
+   - 셋업 조건
+   - 반복 알람 조건 점검
+
+Display as:
+문제 발생 → 패턴 확인 → 영향 분석 → 원인 후보 → 조치 제안
+
+Important:
+This scenario must be clearly marked as example/demo, not actual confirmed finding.
+
+==================================================
+[VISUAL DESIGN REQUIREMENTS]
+
+This app must look GOOD.
+
+Strong requirements:
+- Streamlit wide layout
+- Clear spacing and section grouping
+- Use columns well
+- Use consistent card styling
+- Use strong titles and subtitles
+- Charts must be easy to read
+- Prefer clean dark theme or polished modern theme if existing app already uses one
+- Keep visual consistency across all tabs
+
+[INSIGHT GENERATION]
+
+Reuse logic but simplify language:
+
+Generate 3~5 sentences:
+
+Example:
+- “특정 설비에서 정지시간이 집중됩니다”
+- “상위 원인이 대부분의 손실을 차지합니다”
+- “동일 알람이 반복 발생합니다”
+
+RULE:
+- NEVER say root cause confirmed
+- Use:
+- “패턴”
+- “가능성”
+- “후보”
+
+--------------------------------------------------
+[ACTION RECOMMENDATION]
+
+Reuse:
+ACTION_TEMPLATES
+
+Display:
+- Top 3 stop_reason 기반 action
+
+--------------------------------------------------
+[RCA SCENARIO (IMPORTANT)]
+
+If real data is weak:
+
+Use existing sample data generator:
+generate_sample_data()
+
+Create a section:
+“예시 RCA 시나리오”
+
+Explain flow:
+문제 → 패턴 → 영향 → 원인 후보 → 조치
+
+==================================================
+[WHAT TO REMOVE]
+
+Remove:
+- 과도한 KPI (OEE 세부 breakdown 일부)
+- 불필요한 테이블 출력
+- 복잡한 필터
+- 너무 많은 시각화
+
+==================================================
+[DESIGN RULE]
+
+- Clean
+- Wide layout
+- Executive friendly
+- Minimal UI
+- Korean only
+
+==================================================
+[FINAL GOAL]
+
+When user opens app:
+
+1. 데이터 상태 이해
+2. 설비 문제 확인
+3. 원인 패턴 이해
+4. RCA 흐름 이해
+
+==================================================
+[VERY IMPORTANT]
+
+This is NOT a dashboard.
+
+This is a STORY:
+
+Data → Problem → Pattern → Cause Candidate → Action
+
+Reuse existing code.
+Do NOT reinvent.
+
+Start by:
+1. Reading app.py
+2. Identifying reusable RCA logic
+3. Refactoring into 3-tab structure
