@@ -410,9 +410,8 @@ def build_mounter_item_fact(raw: Dict[str, pd.DataFrame]) -> pd.DataFrame:
     if df.empty:
         return pd.DataFrame()
     item_col = next((c for c in ["item", "item_name", "key", "param"] if c in df.columns), None)
-    if item_col is None:
-        return pd.DataFrame()
     value_col = next((c for c in ["value", "val", "result", "status", "state", "data_value", "item_value"] if c in df.columns and c != item_col), None)
+    output_col = next((c for c in ["output", "output_qty", "qty"] if c in df.columns), None)
     df["event_ts"] = _pick_dt(df, ["file_dt", "make_dt"])
     df["day"] = pd.to_datetime(df["event_ts"], errors="coerce").dt.date
     df["machine_id"] = _pick_txt(df, ["mach_cd"])
@@ -420,11 +419,19 @@ def build_mounter_item_fact(raw: Dict[str, pd.DataFrame]) -> pd.DataFrame:
     df["stage_no"] = pd.to_numeric(_pick(df, ["stage", "stage_no"]), errors="coerce")
     df["lot_id"] = _pick_txt(df, ["lot_nm", "lot_id"])
     df["model_label"] = _pick_txt(df, ["model_name", "model", "pcbmodel", "lot_nm", "lot_id"])
-    df["item_key"] = df[item_col].astype(str)
+    if item_col:
+        df["item_key"] = df[item_col].astype(str)
+    else:
+        # detail 테이블에 item 계열 컬럼이 없는 경우에도 생산 이벤트 기반 요약은 가능해야 한다.
+        df["item_key"] = "throughput"
     if value_col:
         df["item_value"] = df[value_col]
+    elif output_col:
+        df["item_value"] = df[output_col]
     else:
         df["item_value"] = pd.NA
+    if output_col:
+        df["output_qty"] = pd.to_numeric(df[output_col], errors="coerce")
     if "row_num" in df.columns:
         row_part = pd.to_numeric(df["row_num"], errors="coerce").astype("Int64").astype(str)
     else:
