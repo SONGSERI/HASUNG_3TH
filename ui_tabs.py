@@ -2491,7 +2491,7 @@ def render_rca(clean: Dict[str, pd.DataFrame], marts: Dict[str, pd.DataFrame], s
     for df in [comp, stop, insp]:
         if not df.empty and "event_ts" in df.columns:
             df["event_ts"] = pd.to_datetime(df["event_ts"], errors="coerce")
-            df["time_bucket"] = df["event_ts"].dt.floor("H")
+            df["time_bucket"] = df["event_ts"].dt.floor("h")
             df["day"] = df["event_ts"].dt.date
 
     if not comp.empty:
